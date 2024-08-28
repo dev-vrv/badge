@@ -2,5 +2,6 @@ node_modules/
 media/
 env/
 *.pyc
-migrations/*
+migrations/*.py
 !migrations/__init__.py
+*.log
