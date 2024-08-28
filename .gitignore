@@ -1,0 +1,6 @@
+node_modules/
+media/
+env/
+*.pyc
+migrations/*
+!migrations/__init__.py
