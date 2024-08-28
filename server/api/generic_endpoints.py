@@ -36,7 +36,7 @@ def generic_apps_endpoints(apps_list: list[str]):
             models = app_config.get_models()
 
             for model in models:
-                serializer = generate_serializer(model, exclude=['password'])
+                serializer = generate_serializer(model)
                 viewset = generate_viewset(model, serializer)
                 generic.append((model, serializer, viewset))
 
@@ -57,7 +57,7 @@ def generic_apps_configs(router, model, serializer) -> dict:
     if model_name not in generated_paths_info[app_label]:
         generated_paths_info[app_label][model_name] = {
             'endpoints': {},
-            'fields': get_fields_metadata(model, serializer.Meta.exclude),
+            'fields': get_fields_metadata(model, serializer),
         }
 
     for url_pattern in router.urls:
