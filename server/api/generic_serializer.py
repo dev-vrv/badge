@@ -59,9 +59,14 @@ def get_instance_metadata(instance):
     return field_metadata
 
 
-def get_fields_metadata(model):
+def get_fields_metadata(model, exclude=None):
     field_metadata = []
+    exclude = exclude or []
+
     for field in model._meta.get_fields():
+        if field.name in exclude:
+            continue
+        
         if isinstance(field, models.Field):
             field_type = [k for k, v in FIELDS_MAP.items() if type(field).__name__ in v]
             field_info = {
@@ -79,10 +84,12 @@ def get_fields_metadata(model):
     return field_metadata
 
 
-def generate_serializer(model_class):
+def generate_serializer(model_class, exclude=None):
+    exclude = exclude or []
+
     class GenericSerializer(serializers.ModelSerializer):
         class Meta:
             model = model_class
-            fields = '__all__'
+            exclude = ['password']
 
     return GenericSerializer
