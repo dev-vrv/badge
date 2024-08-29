@@ -18,26 +18,41 @@ FIELDS_MAP = {
         'PositiveSmallIntegerField', 
         'SmallIntegerField'
     ],
-    'string': [
+    'textarea': [
+        'BinaryField',
+        'TextField',
+        'JSONField',
+        'XMLField',
+        'YAMLField',
+    ],
+    'text': [
         'CharField', 
-        'EmailField', 
         'SlugField', 
-        'TextField', 
         'URLField',    
     ],
     'date': [
         'DateField',
-        'DateTimeField',
+    ],
+    'datetime': [
+        'DateTimeField',  
+    ],
+    'time': [
+        'DurationField',
         'TimeField',
     ],
-    'boolean': [
+    'checkbox': [
         'BooleanField',
     ],
+    'email': [
+        'EmailField',
+    ]
 }
 
 
 class AppSerializer(serializers.ModelSerializer):
     exclude = ['password', 'last_login']
+    list_display_links = ['id']
+    read_only_fields = ['id', 'created_at', 'updated_at', 'date_joined']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -70,53 +85,35 @@ class AppSerializer(serializers.ModelSerializer):
         model = None
 
     
-def get_instance_metadata(instance):
-    model = instance.__class__
+def _collect_field_metadata(model, instance=None, exclude_fields=None):
     field_metadata = []
-    
     for field in model._meta.get_fields():
-        if isinstance(field, models.Field):
-            field_type = [k for k, v in FIELDS_MAP.items() if type(field).__name__ in v]
-            field_info = {
-                'name': field.name,
-                'type': field_type[0] if field_type else None,
-                'value': getattr(instance, field.name),
-                'null': getattr(field, 'null', None),
-                'blank': getattr(field, 'blank', None),
-                'readonly': not field.editable,
-            }
-
-            if hasattr(field, 'max_length'):
-                field_info['max_length'] = field.max_length
-
-            field_metadata.append(field_info)
-    
-    return field_metadata
-
-
-def get_fields_metadata(model, serializer):
-    field_metadata = []
-    exclude = serializer.exclude
-
-    for field in model._meta.get_fields():
-        if field.name in exclude:
+        if exclude_fields and field.name in exclude_fields:
             continue
         
         if isinstance(field, models.Field):
             field_type = [k for k, v in FIELDS_MAP.items() if type(field).__name__ in v]
             field_info = {
+                'list_display_link': field.name in AppSerializer.list_display_links,
                 'name': field.name,
                 'type': field_type[0] if field_type else None,
+                'readonly': field.name in AppSerializer.read_only_fields,
                 'null': getattr(field, 'null', None),
                 'blank': getattr(field, 'blank', None),
-                'readonly': not field.editable,
+                'value': getattr(instance, field.name) if instance else None,
+                'max_length': field.max_length if hasattr(field, 'max_length') else None,
             }
-
-            if hasattr(field, 'max_length'):
-                field_info['max_length'] = field.max_length
-
             field_metadata.append(field_info)
+
     return field_metadata
+
+def get_instance_metadata(instance):
+    model = instance.__class__
+    return _collect_field_metadata(model, instance=instance)
+
+def get_fields_metadata(model, serializer):
+    exclude = serializer.exclude
+    return _collect_field_metadata(model, exclude_fields=exclude)
 
 
 def generate_serializer(model_class):

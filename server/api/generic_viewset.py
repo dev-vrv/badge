@@ -13,11 +13,14 @@ class ApiViewSet(viewsets.ViewSet):
         return paginator.get_paginated_response(serializer.data)
     
 
+    
+    
     def create(self, request):
         pass
 
     def retrieve(self, request, pk=None):
-        pass
+        obj = self.queryset.get(pk=pk)
+        return Response(self.serializer_class(obj).data)
 
     def update(self, request, pk=None):
         pass

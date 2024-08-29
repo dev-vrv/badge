@@ -4,4 +4,5 @@ from .models import Users
 class AppUsersSerializer(AppSerializer):
     class Meta:
         model = Users
-        exclude = ['id', 'email'] + AppSerializer.exclude
+        exclude = [] + AppSerializer.exclude
+        read_only_fields = [] + AppSerializer.read_only_fields
