@@ -1,8 +1,8 @@
 from rest_framework.routers import DefaultRouter
 from django.conf import settings
-from .generic_endpoints import generic_apps_endpoints, generic_apps_configs
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from .generic_endpoints import generic_apps_endpoints, generic_apps_configs
 import logging
 
 logger = logging.getLogger(__name__)

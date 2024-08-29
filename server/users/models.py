@@ -43,6 +43,11 @@ class Users(AbstractUser):
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
     )
+    
+    serializer_class = 'users.serializers.AppUsersSerializer';
+    class Meta:
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
 
     def __str__(self):
         return self.email

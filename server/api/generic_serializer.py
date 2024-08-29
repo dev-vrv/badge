@@ -1,9 +1,10 @@
+import importlib
 import logging
 from rest_framework import serializers
 from django.db import models
 from django.utils import timezone
 from datetime import datetime, timezone as dt_timezone
-
+logger = logging.getLogger(__name__)
 
 FIELDS_MAP = {
     'number': [
@@ -34,41 +35,41 @@ FIELDS_MAP = {
     ],
 }
 
-logger = logging.getLogger(__name__)
-
 
 class AppSerializer(serializers.ModelSerializer):
-    exclude_fields = ['password', 'last_login']
+    exclude = ['password', 'last_login']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         valid_fields = [field.name for field in self.Meta.model._meta.get_fields()]
-        self.exclude_fields = [field for field in self.exclude_fields if field in valid_fields and field]
+        self.exclude = [field for field in self.exclude if field in valid_fields and field]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
 
-        # Форматирование дат и времени
         for field_name, field in self.fields.items():
             value = representation.get(field_name)
-            
             if value:
                 try:
                     if isinstance(field, serializers.DateTimeField):
                         dt_value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%fZ')
                         aware_dt_value = dt_value.replace(tzinfo=dt_timezone.utc)
-                        representation[field_name] = timezone.localtime(aware_dt_value).strftime('%Y-%m-%d %H:%M')
+                        representation[field_name] = timezone.localtime(aware_dt_value).strftime('%d.%m.%Y %H:%M')
                     elif isinstance(field, serializers.DateField):
-                        date_value = datetime.strptime(value, '%Y-%m-%d').date()
-                        representation[field_name] = date_value.strftime('%Y-%m-%d')
+                        date_value = datetime.strptime(value, '%d.%m.%Y').date()
+                        representation[field_name] = date_value.strftime('%d.%m.%Y')
                     elif isinstance(field, serializers.TimeField):
                         time_value = datetime.strptime(value, '%H:%M:%S').time()
                         representation[field_name] = time_value.strftime('%H:%M')
                 except Exception as e:
                     logging.error(f'Error in {self.Meta.model} serializer: {e}')
-                    print(e)
-        
+
         return representation
+    
+    class Meta:
+        model = None
+
+    
 def get_instance_metadata(instance):
     model = instance.__class__
     field_metadata = []
@@ -95,7 +96,7 @@ def get_instance_metadata(instance):
 
 def get_fields_metadata(model, serializer):
     field_metadata = []
-    exclude = serializer.exclude_fields
+    exclude = serializer.exclude
 
     for field in model._meta.get_fields():
         if field.name in exclude:
@@ -119,9 +120,17 @@ def get_fields_metadata(model, serializer):
 
 
 def generate_serializer(model_class):
+    if hasattr(model_class, 'serializer_class'):
+        serializer_class_path = getattr(model_class, 'serializer_class')
+        if isinstance(serializer_class_path, str):
+            module_name, class_name = serializer_class_path.rsplit('.', 1)
+            module = importlib.import_module(module_name)
+            custom_serializer_class = getattr(module, class_name)
+            return custom_serializer_class
+        
     class GenericSerializer(AppSerializer):
         class Meta:
             model = model_class
-            exclude = AppSerializer.exclude_fields
-    
+            exclude = AppSerializer.exclude
+
     return GenericSerializer

@@ -1,12 +1,16 @@
-from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 
-# Create your views here.
 
 class ApiViewSet(viewsets.ViewSet):
+
     def list(self, request):
-        return Response(self.serializer_class(self.queryset, many=True).data)
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        result_page = paginator.paginate_queryset(self.queryset, request)
+        serializer = self.serializer_class(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
     
 
     def create(self, request):
@@ -23,6 +27,7 @@ class ApiViewSet(viewsets.ViewSet):
 
     def destroy(self, request, pk=None):
         pass
+
 
 def generate_viewset(model_obj, serializer_cls):
     class GenericViewSet(ApiViewSet):
