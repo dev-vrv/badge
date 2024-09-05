@@ -45,6 +45,11 @@ FIELDS_MAP = {
     ],
     'email': [
         'EmailField',
+    ],
+    'selected': [
+        'ForeignKey',
+        'ManyToManyField',
+        'OneToOneField',
     ]
 }
 
@@ -85,6 +90,29 @@ class AppSerializer(serializers.ModelSerializer):
         model = None
 
     
+def _detect_field_type(field):
+    if hasattr(field, 'choices') and field.choices:
+        return 'selected'
+    
+    field_type = [k for k, v in FIELDS_MAP.items() if type(field).__name__ in v]
+    return field_type[0] if field_type else None
+
+
+def _detect_field_choices(field, instance=None):
+    if hasattr(field, 'choices') and field.choices:
+        if instance is None:
+            return list(field.choices)
+        else:
+            display_method = f"get_{field.name}_display"
+            if hasattr(instance, display_method):
+                return getattr(instance, display_method)()
+
+    if instance is not None:
+        return getattr(instance, field.name)
+
+    return None
+
+    
 def _collect_field_metadata(model, instance=None, exclude_fields=None):
     field_metadata = []
     for field in model._meta.get_fields():
@@ -92,15 +120,13 @@ def _collect_field_metadata(model, instance=None, exclude_fields=None):
             continue
         
         if isinstance(field, models.Field):
-            field_type = [k for k, v in FIELDS_MAP.items() if type(field).__name__ in v]
             field_info = {
                 'list_display_link': field.name in AppSerializer.list_display_links,
                 'name': field.name,
-                'type': field_type[0] if field_type else None,
+                'type': _detect_field_type(field),
                 'readonly': field.name in AppSerializer.read_only_fields,
-                'null': getattr(field, 'null', None),
                 'blank': getattr(field, 'blank', None),
-                'value': getattr(instance, field.name) if instance else None,
+                'choices': _detect_field_choices(field, instance),
                 'max_length': field.max_length if hasattr(field, 'max_length') else None,
             }
             field_metadata.append(field_info)

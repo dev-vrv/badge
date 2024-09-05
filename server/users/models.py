@@ -20,11 +20,25 @@ class UsersManager(BaseUserManager):
 
 
 class Users(AbstractUser):
+    
+    STATUS_CHOICES = (
+        ('new', 'New'),
+        ('verified', 'Verified'),
+        ('vip', 'VIP'),
+        ('blocked', 'Blocked'),
+    )
+    
     username = None
     email = models.EmailField(unique=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+    
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='new',
+    )
 
     objects = UsersManager()
     
