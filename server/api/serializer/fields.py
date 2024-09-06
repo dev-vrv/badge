@@ -21,10 +21,21 @@ class CustomTimeField(serializers.TimeField):
         return super().to_representation(value)
 
 
+class CustomManyRelatedField(serializers.RelatedField):
 
-class CustomManyRelatedField(serializers.ManyRelatedField):
     def to_representation(self, value):
+        if hasattr(value, 'all'):
+            current_relations = [self._get_representation(item) for item in value.all()]
+        else:
+            current_relations = [self._get_representation(value)]
+        return current_relations
 
-        related_serializer = self.child_relation
-        print('related_serializer', related_serializer)
-        return []
+    def _get_representation(self, item):
+        return {
+            'id': item.id,
+            'name': str(item),
+        }
+
+    def get_queryset(self):
+        related_model = self.queryset.model
+        return related_model.objects.all()
