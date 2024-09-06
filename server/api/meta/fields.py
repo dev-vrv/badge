@@ -93,9 +93,11 @@ def _collect_field_metadata(model, instance=None, exclude_fields=None):
 
     return field_metadata
 
+
 def get_instance_metadata(instance):
     model = instance.__class__
     return _collect_field_metadata(model, instance=instance)
+
 
 def get_fields_metadata(model, serializer):
     exclude = serializer.exclude

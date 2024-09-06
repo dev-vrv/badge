@@ -15,33 +15,28 @@ class UsersManager(BaseUserManager):
     def create_superuser(self, email, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
 
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
         return self.create_user(email, password, **extra_fields)
 
 
 class Users(AbstractUser):
-    
     STATUS_CHOICES = (
         ('new', 'New'),
         ('verified', 'Verified'),
         ('vip', 'VIP'),
         ('blocked', 'Blocked'),
     )
-    
-    username = None
-    email = models.EmailField(unique=True)
-
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     
-    status = models.CharField(
-        max_length=10,
-        choices=STATUS_CHOICES,
-        default='new',
-    )
-
-    objects = UsersManager()
+    username = None
     
+        
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='customuser_set',
@@ -58,6 +53,18 @@ class Users(AbstractUser):
         verbose_name='user permissions',
     )
     
+    objects = UsersManager()
+    
+    email = models.EmailField(unique=True)
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='new',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
     serializer_class = 'users.serializers.AppUsersSerializer';
     class Meta:
         verbose_name = 'User'

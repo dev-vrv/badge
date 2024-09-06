@@ -3,52 +3,41 @@ import logging
 from rest_framework import serializers
 from django.utils import timezone
 from datetime import datetime, timezone as dt_timezone
+from api.serializer.fields import CustomDateTimeField, CustomDateField, CustomTimeField, CustomManyRelatedField
 
 
 # * ------------------------- App Serializer Generator ------------------------- * #
 
 logger = logging.getLogger(__name__)
 
+
+    
+
 class AppSerializer(serializers.ModelSerializer):
     exclude = ['password', 'last_login']
     list_display_links = ['id']
     read_only_fields = ['id', 'created_at', 'updated_at', 'date_joined']
+    depth = 2
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        valid_fields = [
-            field.name for field in self.Meta.model._meta.get_fields()]
-        self.exclude = [
-            field for field in self.exclude if field in valid_fields and field]
+        self.valid_fields = [field.name for field in self.Meta.model._meta.get_fields()]
+        self.exclude = [field for field in self.exclude if field in self.valid_fields and field]
+
+        for field_name, field in self.fields.items():
+            if isinstance(field, serializers.DateTimeField):
+                self.fields[field_name] = CustomDateTimeField()
+            elif isinstance(field, serializers.DateField):
+                self.fields[field_name] = CustomDateField()
+            elif isinstance(field, serializers.TimeField):
+                self.fields[field_name] = CustomTimeField()
+            # elif isinstance(field, serializers.ManyRelatedField):
+            #     self.fields[field_name] = CustomManyRelatedField(self)
+
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-
-        for field_name, field in self.fields.items():
-            value = representation.get(field_name)
-            if value:
-                try:
-                    if isinstance(field, serializers.DateTimeField):
-                        dt_value = datetime.strptime(
-                            value, '%Y-%m-%dT%H:%M:%S.%fZ')
-                        aware_dt_value = dt_value.replace(
-                            tzinfo=dt_timezone.utc)
-                        representation[field_name] = timezone.localtime(
-                            aware_dt_value).strftime('%d.%m.%Y %H:%M')
-                    elif isinstance(field, serializers.DateField):
-                        date_value = datetime.strptime(
-                            value, '%d.%m.%Y').date()
-                        representation[field_name] = date_value.strftime(
-                            '%d.%m.%Y')
-                    elif isinstance(field, serializers.TimeField):
-                        time_value = datetime.strptime(
-                            value, '%H:%M:%S').time()
-                        representation[field_name] = time_value.strftime(
-                            '%H:%M')
-                except Exception as e:
-                    logging.error(
-                        f'Error in {self.Meta.model} serializer: {e}')
-
+        print(representation)
         return representation
 
     class Meta:
