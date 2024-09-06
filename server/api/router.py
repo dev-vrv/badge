@@ -1,15 +1,13 @@
 from rest_framework.routers import DefaultRouter
-from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .generic_endpoints import generic_apps_endpoints, generic_apps_configs
+from api.gen.endpoints import EndpointsGenerator
 import logging
 
 logger = logging.getLogger(__name__)
 router = DefaultRouter()
-
-apps_list = settings.INSTALLED_APPS_API
-endpoints = generic_apps_endpoints(apps_list)
+generator = EndpointsGenerator()
+endpoints = generator.generate_endpoints()
 
 configs = []
 for model, serializer, viewset in endpoints:
@@ -19,7 +17,7 @@ for model, serializer, viewset in endpoints:
     
     router.register(endpoint, viewset, basename=f'{app_label}-{model_name}')
     
-    configs.append(generic_apps_configs(router, model, serializer)) 
+    configs.append(generator.generic_apps_configs(router, model, serializer)) 
     
     logger.info(f"Registered endpoint: {endpoint}")
     
@@ -29,7 +27,7 @@ class GeneratedEndpointsView(APIView):
         generated_paths_info = {}
 
         for model, serializer, viewset in endpoints:            
-            app_info = generic_apps_configs(router, model, serializer)
+            app_info = generator.generic_apps_configs(router, model, serializer)
             generated_paths_info.update(app_info)
 
         return Response(generated_paths_info)

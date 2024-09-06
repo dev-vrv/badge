@@ -1,7 +1,13 @@
+import logging
+import json
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
+
+# * ------------------------- App ViewSet Generator ------------------------- * #
+
+logger = logging.getLogger(__name__)
 
 class ApiViewSet(viewsets.ViewSet):
 
@@ -11,9 +17,6 @@ class ApiViewSet(viewsets.ViewSet):
         result_page = paginator.paginate_queryset(self.queryset, request)
         serializer = self.serializer_class(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-    
-
-    
     
     def create(self, request):
         pass

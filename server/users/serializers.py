@@ -1,4 +1,4 @@
-from api.generic_serializer import AppSerializer
+from api.gen.serializer import AppSerializer
 from .models import Users
 
 class AppUsersSerializer(AppSerializer):
