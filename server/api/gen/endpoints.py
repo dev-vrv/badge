@@ -42,9 +42,19 @@ class EndpointsGenerator:
             if route_name == stripped_name:
                 for method, action in route.mapping.items():
                     methods.append(method.upper())
-
         return methods
     
+    
+    def get_is_detail(self, router, viewset, name) -> bool:
+        basename = router.get_default_basename(viewset)
+        stripped_name = '-'.join(name.split('-')[1:])
+        
+        routes = router.get_routes(viewset)
+        for route in routes:
+            route_name = route.name.format(basename=basename)
+            if route_name == stripped_name:
+                return route.detail
+        return False
        
     
     def generate_endpoints(self):
@@ -86,10 +96,15 @@ class EndpointsGenerator:
             if app_path in patterns and not "\\.(?P<format>[a-z0-9]+)" in patterns:
                 endpoints = self.apps_configs[app_label][model_name]['endpoints']
                 if name not in endpoints:
-                    endpoints[self.clean_pattern_name(name)] = {
+                    clean_name = self.clean_pattern_name(name)
+                    endpoints[clean_name] = {
                         'endpoint': self.clean_url(patterns),
-                        'method': self.get_methods(router, viewset, name),
+                        'methods': self.get_methods(router, viewset, name),
+                        'detail': self.get_is_detail(router, viewset, name),
+                        'description': '',
                     }
+                    if endpoints[clean_name]['detail']:
+                        endpoints[clean_name]['endpoint'] = endpoints[clean_name]['endpoint'].replace(clean_name, f'pk/{clean_name}')
         
         return self.apps_configs
             
