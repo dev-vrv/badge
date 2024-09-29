@@ -61,11 +61,11 @@ class EndpointsGenerator:
 
             except Exception as e:
                 logging.error(f'Generic Api Error in {app} app: {e}')
+                
         return generic
 
     def generic_apps_configs(self, router, model, serializer, viewset) -> dict:
         self.apps_configs = {}
-        
         
         app_label = model._meta.app_label
         model_name = model._meta.model_name
@@ -78,9 +78,7 @@ class EndpointsGenerator:
                 'endpoints': {},
                 'fields': get_fields_metadata(model, serializer),
             }
-            
-            
-        
+
         for url_pattern in router.urls:
             name = url_pattern.name
             app_path = f'{app_label}/{model_name}'
@@ -92,7 +90,7 @@ class EndpointsGenerator:
                         'endpoint': self.clean_url(patterns),
                         'method': self.get_methods(router, viewset, name),
                     }
-
+        
         return self.apps_configs
             
 
