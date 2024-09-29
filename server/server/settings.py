@@ -10,6 +10,8 @@ PROJECT_DIR = BASE_DIR.parent
 env = environ.Env()
 environ.Env.read_env(os.path.join(PROJECT_DIR, '.env'))
 
+FIRST_LOAD = env.bool('FIRST_LOAD', default=True)
+
 SECRET_KEY = env('SECRET_KEY')
 
 DEBUG = env.bool('DEBUG', default=True)
@@ -92,8 +94,8 @@ DATABASES = {
         'NAME': env('DB_NAME'),
         'USER': env('DB_USER'),
         'HOST': env('DB_HOST'),
-        'PORT': env('DB_PORT'),
         'PASSWORD': env('DB_PASSWORD'),
+        'PORT': 3306,
     }
 }
 
@@ -148,19 +150,19 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': env('LOG_LEVEL'),
+            'level': 'ERROR',
             'class': 'logging.StreamHandler',
         },
         'file': {
-            'level': env('LOG_LEVEL'),
+            'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': 'django.log',
+            'filename': os.path.join(BASE_DIR, 'log', 'django.log'),
         },
     },
     'loggers': {
         '': {
-            'handlers': ['console'],
-            'level': env('LOG_LEVEL'),
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',
             'propagate': True,
         },
     },

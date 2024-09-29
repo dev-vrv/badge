@@ -5,9 +5,10 @@ from .viewset import generate_viewset
 from api.meta.fields import get_fields_metadata
 from django.apps import apps
 from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSetMixin
 
-
-# * ------------------------- App ViewSet Generator ------------------------- * #
+# * ------------------------- App Endpoints Generator ------------------------- * #
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +25,27 @@ class EndpointsGenerator:
     def clean_url(self, patterns: str) -> str:
         url = re.sub(r'\(\?P<[^)]+>\[[^]]+\]\+\)', '', patterns)
         url = re.sub(r'\(\?P<\w+>[a-z0-9]+\)/?', '', url)
-        url = url.replace('^', '').replace('$', '')
-        url = url.replace('\\\\', '') 
-        url = url.strip('/')
-        url = url.replace('(?P<pk>[/.]+)', '')
-        url = url.replace('(?P<pk>[a-z0-9]+)', '')
+        url = re.sub(r'[\^\$]', '', url)
+        url = re.sub(r'/+', '/', url)
         if not url.endswith('/'):
             url += '/'
         return '/api/' + url
+    
+    def get_methods(self, router, viewset, name) -> list:
+        methods = []
+        basename = router.get_default_basename(viewset)
+        stripped_name = '-'.join(name.split('-')[1:])
+        
+        routes = router.get_routes(viewset)
+        for route in routes:
+            route_name = route.name.format(basename=basename)
+            if route_name == stripped_name:
+                for method, action in route.mapping.items():
+                    methods.append(method.upper())
+
+        return methods
+    
+       
     
     def generate_endpoints(self):
         generic = []
@@ -49,8 +63,9 @@ class EndpointsGenerator:
                 logging.error(f'Generic Api Error in {app} app: {e}')
         return generic
 
-    def generic_apps_configs(self, router, model, serializer) -> dict:
+    def generic_apps_configs(self, router, model, serializer, viewset) -> dict:
         self.apps_configs = {}
+        
         
         app_label = model._meta.app_label
         model_name = model._meta.model_name
@@ -63,7 +78,9 @@ class EndpointsGenerator:
                 'endpoints': {},
                 'fields': get_fields_metadata(model, serializer),
             }
-
+            
+            
+        
         for url_pattern in router.urls:
             name = url_pattern.name
             app_path = f'{app_label}/{model_name}'
@@ -73,8 +90,9 @@ class EndpointsGenerator:
                 if name not in endpoints:
                     endpoints[self.clean_pattern_name(name)] = {
                         'endpoint': self.clean_url(patterns),
-                        'method': 'GET',
+                        'method': self.get_methods(router, viewset, name),
                     }
+
         return self.apps_configs
             
 

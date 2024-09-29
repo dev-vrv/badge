@@ -17,10 +17,12 @@ for model, serializer, viewset in endpoints:
     
     router.register(endpoint, viewset, basename=f'{app_label}-{model_name}')
     
-    configs.append(generator.generic_apps_configs(router, model, serializer)) 
+    configs.append(generator.generic_apps_configs(router, model, serializer, viewset)) 
     
     logger.info(f"Registered endpoint: {endpoint}")
     
+
+
 
 class GeneratedEndpointsView(APIView):
     def get(self, request):
@@ -31,3 +33,4 @@ class GeneratedEndpointsView(APIView):
             generated_paths_info.update(app_info)
 
         return Response(generated_paths_info)
+    

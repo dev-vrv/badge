@@ -3,35 +3,37 @@ import json
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-
+from rest_framework.decorators import action 
 
 # * ------------------------- App ViewSet Generator ------------------------- * #
 
 logger = logging.getLogger(__name__)
 
+
 class ApiViewSet(viewsets.ViewSet):
 
-    def list(self, request):
+    async def list(self, request):
         paginator = PageNumberPagination()
         paginator.page_size = 10
         result_page = paginator.paginate_queryset(self.queryset, request)
         serializer = self.serializer_class(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
     
-    def create(self, request):
+    async def create(self, request):
         pass
 
-    def retrieve(self, request, pk=None):
+    async def retrieve(self, request, pk=None):
         obj = self.queryset.get(pk=pk)
         return Response(self.serializer_class(obj).data)
 
-    def update(self, request, pk=None):
+    @action(detail=True, methods=['post'], url_path='form')
+    async def update_form(self, request, pk=None):
+        return self.queryset.get(pk=pk)
+
+    async def partial_update(self, request, pk=None):
         pass
 
-    def partial_update(self, request, pk=None):
-        pass
-
-    def destroy(self, request, pk=None):
+    async def destroy(self, request, pk=None):
         pass
 
 
