@@ -29,7 +29,7 @@ class GeneratedEndpointsView(APIView):
         generated_paths_info = {}
 
         for model, serializer, viewset in endpoints:            
-            app_info = generator.generic_apps_configs(router, model, serializer)
+            app_info = generator.generic_apps_configs(router, model, serializer, viewset)
             generated_paths_info.update(app_info)
 
         return Response(generated_paths_info)

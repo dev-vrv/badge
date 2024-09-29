@@ -20,7 +20,6 @@ services:
     networks:
       - webnet
 
-  # Nginx 
   nginx:
     container_name: badge-nginx
     image: nginx:latest
@@ -42,7 +41,6 @@ services:
       - webnet
     restart: on-failure
 
-  # Django
   django:
     build: ./server
     container_name: badge-django
@@ -62,6 +60,19 @@ services:
       mysql:
         condition: service_healthy
 
+  next:
+    build: ./client
+    container_name: badge-next
+    command: ./entrypoint.sh
+    volumes:
+      - ./client:/app
+    ports:
+      - "3000:3000"
+    networks:
+      - webnet
+    depends_on:
+      - django
+    
 
 networks:
   webnet:
