@@ -104,7 +104,7 @@ class EndpointsGenerator:
                         'description': '',
                     }
                     if endpoints[clean_name]['detail']:
-                        endpoints[clean_name]['endpoint'] = endpoints[clean_name]['endpoint'].replace(clean_name, f'pk/{clean_name}')
+                        endpoints[clean_name]['endpoint'] = endpoints[clean_name]['endpoint'].replace(clean_name, f'[pk]/{clean_name}')
         
         return self.apps_configs
             
